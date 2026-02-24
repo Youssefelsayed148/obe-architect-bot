@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment files (real secrets/config)
+.env
+.env.production
+.env.local
+.env.*.local
+
+# Keep templates committed
+!.env.example
+!.env.production.example
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build/runtime artifacts
+*.log
+*.pid
+*.tar
+*.tar.gz
+*.pdf
+
+# Node (if added later)
+node_modules/
+
+# Docker local state helpers
+docker-data/

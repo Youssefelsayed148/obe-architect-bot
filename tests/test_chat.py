@@ -1,0 +1,53 @@
+from app.schemas import ChatMessageOut
+from redis.exceptions import RedisError
+
+
+def test_chat_message_returns_schema_and_generates_session_id(client, monkeypatch):
+    import app.main as main
+
+    monkeypatch.setattr(main, "rate_limit", lambda *_args, **_kwargs: None)
+
+    captured = {}
+
+    def fake_handle_message(session_id, msg):
+        captured["session_id"] = session_id
+        return {
+            "session_id": session_id,
+            "messages": [{"type": "text", "text": "ok"}],
+            "buttons": [],
+            "form": None,
+        }
+
+    monkeypatch.setattr(main, "handle_message", fake_handle_message)
+
+    payload = {
+        "channel": "web",
+        "user_id": "u-1",
+        "session_id": None,
+        "text": None,
+        "button_id": None,
+    }
+
+    resp = client.post("/chat/message", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    ChatMessageOut.model_validate(body)
+    assert body["session_id"].startswith("s_")
+    assert captured["session_id"] == body["session_id"]
+
+
+def test_chat_message_returns_503_when_redis_unavailable(client, monkeypatch):
+    import app.main as main
+
+    monkeypatch.setattr(main, "rate_limit", lambda *_args, **_kwargs: (_ for _ in ()).throw(RedisError("redis down")))
+
+    payload = {
+        "channel": "web",
+        "user_id": "u-1",
+        "session_id": None,
+        "text": None,
+        "button_id": None,
+    }
+
+    resp = client.post("/chat/message", json=payload)
+    assert resp.status_code == 503
